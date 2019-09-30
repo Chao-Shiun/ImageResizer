@@ -43,10 +43,12 @@ namespace ImageResizer
             var allFiles = FindImages(sourcePath);
             Task[] taskArr = new Task[allFiles.Capacity];
 
-            for (int i = 0; i < allFiles.Capacity; i++)
+            Parallel.For(0, allFiles.Capacity, i =>
             {
                 taskArr[i] = ProcessImage(i + 1, allFiles[i], destPath, scale);
-            }
+            });
+
+
             return taskArr;
         }
 
