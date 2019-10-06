@@ -38,19 +38,25 @@ namespace ImageResizer
         /// <param name="sourcePath">圖片來源目錄路徑</param>
         /// <param name="destPath">產生圖片目的目錄路徑</param>
         /// <param name="scale">縮放比例</param>
-        public Task[] ResizeImages(string sourcePath, string destPath, double scale)
+        public Task[] ResizeImages(string sourcePath, string destPath, double scale, CancellationTokenSource cts)
         {
             var allFiles = FindImages(sourcePath);
             Task[] taskArr = new Task[allFiles.Capacity];
 
             for (int i = 0; i < allFiles.Capacity; i++)
             {
-                taskArr[i] = ProcessImage(i + 1, allFiles[i], destPath, scale);
+                /*
+                 如果執行速度太快的話會在取消前就被執行
+                 所以在此先sleep 1ms
+                 */
+                Thread.Sleep(1);
+                if (i == 5) cts.Cancel();
+                taskArr[i] = ProcessImageAsync(i + 1, allFiles[i], destPath, scale, cts.Token);
             }
             return taskArr;
         }
 
-        public Task ProcessImage(int no, string filePath, string destPath, double scale)
+        public Task ProcessImageAsync(int no, string filePath, string destPath, double scale, CancellationToken token)
         {
             return Task.Run(() =>
             {
@@ -71,7 +77,7 @@ namespace ImageResizer
 
                 string destFile = Path.Combine(destPath, imgName + ".jpg");
                 processedImage.Save(destFile, ImageFormat.Jpeg);
-            });
+            }, token);
         }
 
         /// <summary>
